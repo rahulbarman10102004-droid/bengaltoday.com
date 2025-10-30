@@ -1,0 +1,2335 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bengal Today - স্থানীয় সংবাদ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            touch-action: manipulation;
+            overflow-x: hidden;
+            height: 100%;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            background-color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Header CC Light Sweep Effect - Only on refresh */
+        header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.4) 30%,
+                rgba(255, 255, 255, 0.7) 50%,
+                rgba(255, 255, 255, 0.4) 70%,
+                transparent
+            );
+            z-index: 1;
+            animation: none;
+        }
+        
+        header.light-sweep::after {
+            animation: headerSweep 3s ease-out;
+        }
+        
+        @keyframes headerSweep {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .logo {
+            height: 40px;
+            margin-right: 10px;
+        }
+        
+        .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .tagline {
+            font-size: 14px;
+            text-align: center;
+            opacity: 0.9;
+        }
+        
+        .search-container {
+            display: flex;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .search-box {
+            display: flex;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        
+        .search-box button {
+            background-color: #FF9800;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+        
+        /* Category Navigation */
+        .category-nav {
+            background-color: #f0f0f0;
+            padding: 10px 0;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            transition: all 0.3s ease;
+        }
+        
+        .category-list {
+            display: flex;
+            list-style: none;
+            padding: 0 20px;
+            justify-content: center;
+        }
+        
+        .category-list li {
+            margin-right: 15px;
+        }
+        
+        .category-list a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 700;
+            padding: 8px 15px;
+            border-radius: 20px;
+            transition: all 0.3s;
+            background-color: #e0e0e0;
+            display: inline-block;
+            position: relative;
+        }
+        
+        .category-list a.active {
+            background-color: #1e3c72;
+            color: #ffffff;
+            position: relative;
+            overflow: hidden;
+            font-weight: 800;
+        }
+        
+        /* Active Category CC Light Sweep Effect */
+        .category-list a.active::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.5) 30%,
+                rgba(255, 255, 255, 0.8) 50%,
+                rgba(255, 255, 255, 0.5) 70%,
+                transparent
+            );
+            z-index: 1;
+            animation: none;
+        }
+        
+        .category-list a.active.light-sweep::after {
+            animation: activeCategorySweep 3s ease-out;
+        }
+        
+        @keyframes activeCategorySweep {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+        
+        .category-list a.clicked {
+            background-color: #FF9800;
+            color: white;
+            font-weight: 700;
+        }
+        
+        .refresh-icon {
+            margin-left: 5px;
+            display: none;
+        }
+        
+        .refreshing .refresh-icon {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Main Content Styles */
+        main {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+            width: 100%;
+        }
+        
+        .news-content {
+            position: relative;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* Date and Time Display - Fixed Position (Not Animated) */
+        .datetime-mini {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 0 5px;
+        }
+        
+        .date-display-mini {
+            color: #1e3c72;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .time-display-mini {
+            color: #1e3c72;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        /* Breaking News Section - Fixed Position (Not Animated) */
+        .breaking-news-section {
+            background: linear-gradient(135deg, #8B0000, #B22222, #8B0000);
+            border: 3px solid #8B0000;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 50px;
+            height: 50px; /* Fixed height */
+            box-shadow: 0 4px 12px rgba(139, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .breaking-news-section:hover {
+            background: linear-gradient(135deg, #B22222, #8B0000, #B22222);
+        }
+        
+        .breaking-news-label {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #8B0000;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+            z-index: 2;
+            position: relative;
+            transform: translateX(100vw);
+            animation: slideInLabel 1s ease-out forwards;
+        }
+        
+        @keyframes slideInLabel {
+            0% {
+                transform: translateX(100vw);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .breaking-news-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            z-index: 2;
+            height: 100%; /* Take full height of parent */
+            display: flex;
+            align-items: center;
+        }
+        
+        .breaking-news-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: white;
+            line-height: 1.3;
+            white-space: nowrap;
+            margin: 0;
+            position: relative;
+            transform: translateX(100vw);
+            animation: slideInTitle 1s ease-out 0.3s forwards;
+        }
+        
+        @keyframes slideInTitle {
+            0% {
+                transform: translateX(100vw);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Enhanced CC Light sweep effect on the entire red box - চলতেই থাকবে অবিরাম */
+        .breaking-news-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.6) 30%,
+                rgba(255, 255, 255, 0.9) 50%,
+                rgba(255, 255, 255, 0.6) 70%,
+                transparent
+            );
+            z-index: 1;
+            animation: continuousLightSweep 4s ease-in-out infinite;
+        }
+        
+        @keyframes continuousLightSweep {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+        
+        /* Remove excerpt and meta from breaking news */
+        .breaking-news-excerpt,
+        .breaking-news-meta {
+            display: none;
+        }
+        
+        /* মার্কি ইফেক্ট স্টাইল - ULTRA FAST SPEED */
+        .marquee-container {
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+        
+        .marquee-content {
+            display: inline-block;
+            white-space: nowrap;
+            position: absolute;
+            animation: marquee linear forwards;
+            left: 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: white;
+            line-height: 1.3;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        /* মার্কি ইফেক্ট - ULTRA FAST SPEED */
+        @keyframes marquee {
+            0% {
+                transform: translate(0%, -50%);
+            }
+            100% {
+                transform: translate(-100%, -50%);
+            }
+        }
+        
+        /* Dissolve effect after marquee */
+        .dissolve-effect {
+            animation: dissolve 1s ease-out forwards;
+        }
+        
+        @keyframes dissolve {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+        
+        .news-section {
+            margin-bottom: 30px;
+        }
+        
+        /* Remove section title completely */
+        .section-title {
+            display: none;
+        }
+        
+        .news-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        /* All news items with DEEP BLUE color */
+        .news-item {
+            padding: 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0d47a1, #1565c0);
+            border-left: 5px solid #0d47a1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .news-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25);
+        }
+        
+        /* Enhanced CC Light Sweep Effect for News Items - DARKER VERSION */
+        .news-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.8) 30%,
+                rgba(255, 255, 255, 1) 50%,
+                rgba(255, 255, 255, 0.8) 70%,
+                transparent
+            );
+            z-index: 1;
+            animation: none;
+        }
+        
+        .news-item.light-sweep::after {
+            animation: ccLightSweepNews 2.5s ease-out;
+        }
+        
+        @keyframes ccLightSweepNews {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        /* News Image Container - Centered at top with blue background visible */
+        .news-image-container {
+            position: relative;
+            width: 92%;
+            margin: 8px auto 0 auto;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            overflow: hidden;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #0d47a1, #1565c0);
+        }
+        
+        .news-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            border-radius: 6px;
+        }
+        
+        .news-content-wrapper {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Yellow color only for headlines */
+        .news-title {
+            font-size: 17px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: #ffeb3b;
+            user-select: none;
+            position: relative;
+            z-index: 2;
+            line-height: 1.4;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .news-excerpt {
+            font-size: 14px;
+            color: #e0e0e0;
+            margin-bottom: 0;
+            position: relative;
+            z-index: 2;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            flex: 1;
+        }
+        
+        .news-excerpt.expanded {
+            -webkit-line-clamp: unset;
+            display: block;
+            margin-bottom: 12px;
+        }
+        
+        .see-more-btn {
+            background: transparent;
+            color: #ffffff;
+            border: none;
+            padding: 0;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 0;
+            transition: all 0.3s;
+            display: inline-block;
+            text-decoration: underline;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Remove yellow color on hover and keep white */
+        .see-more-btn:hover {
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        }
+        
+        .see-more-btn:active {
+            transform: scale(0.95);
+            color: #ffffff;
+        }
+        
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            position: relative;
+            z-index: 2;
+            align-items: flex-end;
+            margin-top: 12px;
+        }
+        
+        .news-meta span:first-child {
+            color: #ffcc80;
+            font-weight: 500;
+        }
+        
+        .category-tag {
+            background-color: rgba(255, 255, 255, 0.25);
+            color: #fffde7;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .category-tag:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+        
+        .category-tag:active {
+            transform: scale(0.95);
+        }
+        
+        /* Detail Button Styles with Arrow Icon */
+        .detail-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #FF9800, #F57C00);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 3;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .detail-button:hover {
+            background: linear-gradient(135deg, #F57C00, #EF6C00);
+            transform: scale(1.05);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .detail-button:active {
+            transform: scale(0.95);
+        }
+        
+        .detail-button.video {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+        }
+        
+        .detail-button.video:hover {
+            background: linear-gradient(135deg, #d32f2f, #c62828);
+        }
+        
+        .detail-button.photo {
+            background: linear-gradient(135deg, #4CAF50, #388E3C);
+        }
+        
+        .detail-button.photo:hover {
+            background: linear-gradient(135deg, #388E3C, #2E7D32);
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+            grid-column: 1 / -1;
+        }
+        
+        .search-results-info {
+            text-align: center;
+            padding: 10px;
+            color: #1e3c72;
+            font-weight: 500;
+            margin-bottom: 15px;
+            background-color: #f0f8ff;
+            border-radius: 8px;
+        }
+        
+        .loading-indicator {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            grid-column: 1 / -1;
+        }
+        
+        /* Swipe Navigation Indicators */
+        .swipe-indicators {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .swipe-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ccc;
+            transition: background-color 0.3s;
+        }
+        
+        .swipe-indicator.active {
+            background-color: #1e3c72;
+        }
+        
+        /* Swipe Animation - Only for news list */
+        .swipe-animation-left {
+            animation: swipeLeft 0.3s ease-out;
+        }
+        
+        .swipe-animation-right {
+            animation: swipeRight 0.3s ease-out;
+        }
+        
+        @keyframes swipeLeft {
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes swipeRight {
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        /* Footer Styles */
+        footer {
+            background-color: #1e3c72;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-top: auto;
+            width: 100%;
+        }
+        
+        .contact-info {
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .contact-info a {
+            color: white;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.3s;
+        }
+        
+        .contact-info a:hover {
+            color: #FF9800;
+        }
+        
+        .instagram-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .copyright {
+            color: #aaa;
+            font-size: 13px;
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .news-list {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .logo-text {
+                font-size: 20px;
+            }
+            
+            .news-item {
+                padding: 0;
+            }
+            
+            .news-content-wrapper {
+                padding: 12px;
+            }
+            
+            .category-list {
+                padding: 0 10px;
+                justify-content: flex-start;
+            }
+            
+            .category-list li {
+                margin-right: 10px;
+            }
+            
+            .category-list a {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+            
+            .breaking-news-section {
+                padding: 6px 10px;
+                min-height: 44px;
+                height: 44px; /* Fixed height for mobile */
+            }
+            
+            .breaking-news-label {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+            
+            .breaking-news-title {
+                font-size: 14px;
+            }
+            
+            .marquee-content {
+                font-size: 14px;
+            }
+            
+            .news-title {
+                font-size: 16px;
+            }
+            
+            .detail-button {
+                top: 12px;
+                right: 12px;
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+            
+            .date-display-mini, .time-display-mini {
+                font-size: 12px;
+            }
+            
+            .see-more-btn {
+                font-size: 13px;
+            }
+            
+            .news-image-container {
+                width: 94%;
+                margin: 6px auto 0 auto;
+            }
+            
+            .contact-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .news-content {
+                padding: 0 10px;
+            }
+        }
+        
+        /* Desktop-specific styles */
+        @media (min-width: 769px) {
+            .news-list {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+            
+            .logo-container {
+                justify-content: flex-start;
+            }
+            
+            .tagline {
+                text-align: left;
+            }
+            
+            .header-content {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                max-width: 1400px;
+                margin: 0 auto;
+                width: 100%;
+            }
+            
+            .search-box {
+                max-width: 400px;
+            }
+            
+            .category-list {
+                max-width: 1400px;
+                margin: 0 auto;
+                width: 100%;
+            }
+            
+            main {
+                padding: 20px;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .news-list {
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            }
+        }
+        
+        @media (min-width: 1600px) {
+            .news-list {
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            }
+        }
+        
+        /* Prevent zooming */
+        body {
+            touch-action: pan-x pan-y;
+        }
+        
+        /* Disable text selection */
+        * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header id="mainHeader">
+            <div class="header-content">
+                <div class="logo-container">
+                    <svg class="logo" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="40" height="40" rx="8" fill="#FF9800"/>
+                        <text x="20" y="25" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-weight="bold" font-size="18">BT</text>
+                    </svg>
+                    <div>
+                        <div class="logo-text">Bengal Today</div>
+                        <div class="tagline">স্থানীয় সংবাদ, সর্বপ্রথম</div>
+                    </div>
+                </div>
+                
+                <div class="search-container">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="খবর বা স্থান অনুসন্ধান করুন...">
+                        <button id="searchBtn"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <nav class="category-nav" id="categoryNav">
+            <ul class="category-list" id="categoryList">
+                <!-- Categories will be populated by JavaScript -->
+            </ul>
+        </nav>
+        
+        <main id="mainContent">
+            <div class="news-content" id="newsContent">
+                <!-- Date and Time Display - Fixed Position (Not Animated) -->
+                <div class="datetime-mini">
+                    <div class="date-display-mini" id="currentDate"></div>
+                    <div class="time-display-mini" id="currentTime"></div>
+                </div>
+                
+                <!-- Breaking News Section - Fixed Position (Not Animated) -->
+                <div class="breaking-news-section" id="breakingNewsSection" style="display: none;">
+                    <div class="breaking-news-label">ব্রেকিং নিউজ</div>
+                    <div class="breaking-news-content">
+                        <div class="breaking-news-title" id="breakingNewsTitle"></div>
+                    </div>
+                </div>
+                
+                <div class="news-section">
+                    <div id="searchResultsInfo" class="search-results-info" style="display: none;"></div>
+                    
+                    <div class="news-list" id="newsList">
+                        <div class="loading-indicator">
+                            <i class="fas fa-spinner fa-spin"></i> খবর লোড হচ্ছে...
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="swipe-indicators" id="swipeIndicators">
+                    <!-- Swipe indicators will be populated by JavaScript -->
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <div class="contact-info">
+                <a href="tel:7908221216"><i class="fas fa-phone"></i> 7908221216</a>
+                <a href="https://www.instagram.com/rowdy42nt?igsh=eDkyMmt3c29rcGlj" class="instagram-link" target="_blank">
+                    <i class="fab fa-instagram"></i> Instagram
+                </a>
+            </div>
+            <div class="copyright">
+                © 2025 Rahul Barman : all copyrights reserved
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://jynicdiynhibwzuhnvil.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5bmljZGl5bmhpYnd6dWhudmlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExOTA3NDYsImV4cCI6MjA3Njc2Njc0Nn0.1icoPl4s0tmFw4LeLazuy9c_2_MffZjylc4QHFg0-Og';
+        
+        // Supabase client initialization
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Disable zooming with pinch gesture
+        document.addEventListener('touchstart', function(event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('gesturestart', function(event) {
+            event.preventDefault();
+        });
+
+        document.addEventListener('gesturechange', function(event) {
+            event.preventDefault();
+        });
+
+        document.addEventListener('gestureend', function(event) {
+            event.preventDefault();
+        });
+
+        // Calculate elapsed time in Bengali with real-time updates
+        function getElapsedTime(timestamp) {
+            const now = Date.now();
+            const diff = now - new Date(timestamp).getTime();
+            
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(diff / (1000 * 60));
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            if (seconds < 60) {
+                return `${seconds} সেকেন্ড আগে`;
+            } else if (minutes < 60) {
+                return `${minutes} মিনিট আগে`;
+            } else if (hours < 24) {
+                return `${hours} ঘন্টা আগে`;
+            } else {
+                return `${days} দিন আগে`;
+            }
+        }
+
+        // Update time display for all news items
+        function updateAllTimes() {
+            const newsItems = document.querySelectorAll('.news-item');
+            newsItems.forEach(item => {
+                const timestamp = item.getAttribute('data-timestamp');
+                const timeElement = item.querySelector('.time-display');
+                if (timeElement && timestamp) {
+                    timeElement.textContent = getElapsedTime(timestamp);
+                }
+            });
+        }
+
+        // Update real-time clock in 12-hour format with Bengali periods
+        function updateRealTimeClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = String(now.getMinutes()).padStart(2, '0');
+            let seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            // Convert to 12-hour format and determine period
+            let period = '';
+            if (hours >= 3 && hours < 6) {
+                period = 'ভোর';
+            } else if (hours >= 6 && hours < 12) {
+                period = 'সকাল';
+            } else if (hours >= 12 && hours < 15) {
+                period = 'দুপুর';
+            } else if (hours >= 15 && hours < 18) {
+                period = 'বিকাল';
+            } else if (hours >= 18 && hours < 21) {
+                period = 'সন্ধ্যা';
+            } else {
+                period = 'রাত';
+            }
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            
+            document.getElementById('currentTime').textContent = `${hours}:${minutes}:${seconds} ${period}`;
+        }
+
+        // Format date in Bengali with English numbers
+        function getBengaliDate() {
+            const now = new Date();
+            
+            const bengaliDays = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
+            const bengaliMonths = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+            
+            const day = bengaliDays[now.getDay()];
+            const date = now.getDate();
+            const month = bengaliMonths[now.getMonth()];
+            const year = now.getFullYear();
+            
+            return `${day}, ${date} ${month} ${year}`;
+        }
+
+        // Check if a news item is from today - FIXED: Handle midnight properly
+        function isToday(timestamp) {
+            const newsDate = new Date(timestamp);
+            const today = new Date();
+            
+            // Check if the news date is the same as today's date
+            return newsDate.getDate() === today.getDate() &&
+                   newsDate.getMonth() === today.getMonth() &&
+                   newsDate.getFullYear() === today.getFullYear();
+        }
+
+        // Variables for swipe navigation
+        let categories = [];
+        let currentCategoryIndex = 0;
+        let startX = 0;
+        let startY = 0;
+        let endX = 0;
+        let endY = 0;
+        let allNewsData = [];
+        let breakingNewsItems = [];
+        let currentBreakingNewsIndex = 0;
+        let breakingNewsInterval = null;
+        let isTransitioning = false;
+        let currentAnimationType = null;
+        let currentAnimationDuration = 0;
+        
+        // Variables for double-click refresh
+        let lastClickTime = 0;
+        let currentActiveCategory = 'আজকের খবর';
+        let isRefreshing = false;
+
+        // Variables for back button functionality
+        let navigationHistory = ['আজকের খবর'];
+        let currentHistoryIndex = 0;
+        let backButtonPressCount = 0;
+        let backButtonTimeout = null;
+
+        // Global variable to track offline state
+        let isAppOffline = false;
+
+        // Swipe control variables - UPDATED: No looping between first and last
+        let isSwiping = false;
+        let swipeStartTime = 0;
+        let lastSwipeTime = 0;
+        let swipeThreshold = 50; // Minimum horizontal movement for swipe
+        let verticalThreshold = 30; // Maximum vertical movement allowed for swipe
+        let swipeMinVelocity = 0.3; // Minimum velocity for swipe (pixels/ms)
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('currentDate').textContent = getBengaliDate();
+            updateRealTimeClock();
+            setInterval(updateRealTimeClock, 1000);
+            startActiveCategorySweepEffect();
+            loadInitialData();
+            setInterval(updateAllTimes, 60000);
+            setupBackButtonListener();
+            
+            // Check for midnight every minute to update "আজকের খবর" category
+            setInterval(checkMidnightUpdate, 60000);
+            
+            // Add online/offline event listeners
+            setupNetworkListeners();
+            
+            // Initial network status check
+            checkNetworkStatus();
+            
+            // Additional zoom prevention
+            document.addEventListener('wheel', function(e) {
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && (e.key === '+' || e.key === '-' || e.key === '0')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        // Setup network status listeners - FIXED for APK environment
+        function setupNetworkListeners() {
+            // Standard browser events
+            window.addEventListener('online', handleOnline);
+            window.addEventListener('offline', handleOffline);
+            
+            // Additional check for Cordova/PhoneGap environment
+            if (window.cordova || window.PhoneGap) {
+                document.addEventListener('deviceready', function() {
+                    // Cordova specific network events
+                    document.addEventListener('online', handleOnline, false);
+                    document.addEventListener('offline', handleOffline, false);
+                }, false);
+            }
+            
+            // Periodic network check for APK environment
+            setInterval(checkNetworkStatus, 5000);
+        }
+
+        // Check network status - FIXED for APK environment
+        function checkNetworkStatus() {
+            // For APK environment, we need more robust network checking
+            if (navigator.onLine === false) {
+                handleOffline();
+                return;
+            }
+            
+            // Test actual connectivity by making a small fetch request
+            fetch('https://www.google.com/favicon.ico', { 
+                mode: 'no-cors',
+                cache: 'no-cache'
+            })
+            .then(() => {
+                handleOnline();
+            })
+            .catch(() => {
+                handleOffline();
+            });
+        }
+
+        // Handle online event - FIXED for APK environment
+        function handleOnline() {
+            console.log('App is online');
+            isAppOffline = false;
+            
+            // Show category navigation, breaking news, and swipe indicators
+            document.getElementById('categoryNav').style.display = 'block';
+            document.getElementById('swipeIndicators').style.display = 'flex';
+            
+            // If we don't have data yet, reload the app data
+            if (allNewsData.length === 0) {
+                loadInitialData();
+            } else {
+                // Just update the UI to show we're online
+                const newsList = document.getElementById('newsList');
+                if (newsList.innerHTML.includes('ইন্টারনেট সংযোগটি')) {
+                    // Reload the current category
+                    const activeCategory = document.querySelector('.category-list a.active')?.dataset.category || 'আজকের খবর';
+                    renderNews(activeCategory);
+                    findBreakingNews(activeCategory);
+                }
+            }
+        }
+
+        // Handle offline event - FIXED for APK environment
+        function handleOffline() {
+            console.log('App is offline');
+            isAppOffline = true;
+            
+            // Hide category navigation, breaking news, and swipe indicators
+            document.getElementById('categoryNav').style.display = 'none';
+            document.getElementById('breakingNewsSection').style.display = 'none';
+            document.getElementById('swipeIndicators').style.display = 'none';
+            
+            // Show offline error
+            showOfflineError();
+        }
+
+        // Check if it's midnight and update news if needed
+        function checkMidnightUpdate() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            
+            // If it's exactly midnight (12:00 AM), refresh the news
+            if (hours === 0 && minutes === 0) {
+                console.log('Midnight detected, refreshing news for আজকের খবর category');
+                if (currentActiveCategory === 'আজকের খবর') {
+                    refreshCurrentCategory();
+                }
+            }
+        }
+
+        // Setup back button functionality - FIXED: Remove alert messages
+        function setupBackButtonListener() {
+            // Remove any existing beforeunload event listeners that cause alerts
+            window.onbeforeunload = null;
+            
+            // For Cordova/PhoneGap APK environment
+            if (window.cordova || window.PhoneGap) {
+                document.addEventListener('backbutton', handleBackButton, false);
+            }
+            
+            // Use popstate for browser back button
+            window.addEventListener('popstate', function(event) {
+                // Don't show any alerts, just handle the back navigation
+                handleBackButton();
+            });
+        }
+
+        // Handle back button press - FIXED: No alerts, আজকের খবর থেকে exit app
+        function handleBackButton() {
+            // If current category is "আজকের খবর", exit the app directly
+            if (currentActiveCategory === 'আজকের খবর') {
+                if (navigator.app && navigator.app.exitApp) {
+                    navigator.app.exitApp();
+                } else if (window.cordova && window.cordova.plugins) {
+                    // For Cordova APK
+                    navigator.app.exitApp();
+                } else {
+                    // For browser, just go back without alert
+                    window.history.back();
+                }
+                return;
+            }
+
+            // For other categories, implement double-tap to go to "আজকের খবর"
+            const currentTime = new Date().getTime();
+            
+            // Reset back button press count after 1 second
+            if (backButtonTimeout) {
+                clearTimeout(backButtonTimeout);
+            }
+            
+            backButtonTimeout = setTimeout(() => {
+                backButtonPressCount = 0;
+            }, 1000);
+            
+            backButtonPressCount++;
+            
+            if (backButtonPressCount === 1) {
+                // First press - go to previous category in history
+                if (navigationHistory.length > 1 && currentHistoryIndex > 0) {
+                    currentHistoryIndex--;
+                    const previousCategory = navigationHistory[currentHistoryIndex];
+                    
+                    updateActiveCategoryByName(previousCategory);
+                    findBreakingNews(previousCategory);
+                    renderNews(previousCategory);
+                    document.getElementById('searchInput').value = '';
+                    
+                    console.log('Back to previous category:', previousCategory);
+                }
+            } else if (backButtonPressCount === 2) {
+                // Second press - go to "আজকের খবর"
+                updateActiveCategoryByName('আজকের খবর');
+                findBreakingNews('আজকের খবর');
+                renderNews('আজকের খবর');
+                document.getElementById('searchInput').value = '';
+                
+                // Reset history to only "আজকের খবর"
+                navigationHistory = ['আজকের খবর'];
+                currentHistoryIndex = 0;
+                
+                console.log('Double back - going to আজকের খবর');
+                
+                // Reset the counter
+                backButtonPressCount = 0;
+                if (backButtonTimeout) {
+                    clearTimeout(backButtonTimeout);
+                }
+            }
+        }
+
+        // Update active category by name
+        function updateActiveCategoryByName(categoryName) {
+            document.querySelectorAll('.category-list a').forEach(a => {
+                a.classList.remove('active');
+                a.classList.remove('clicked');
+                a.classList.remove('refreshing');
+                
+                if (a.dataset.category === categoryName) {
+                    a.classList.add('active');
+                    const index = parseInt(a.dataset.index);
+                    currentCategoryIndex = index;
+                    currentActiveCategory = categoryName;
+                    
+                    // Update swipe indicators
+                    updateActiveCategory(index);
+                }
+            });
+        }
+
+        // Add to navigation history - FIXED: Improved history management
+        function addToNavigationHistory(category) {
+            // Only add if it's different from the current category
+            if (navigationHistory[currentHistoryIndex] !== category) {
+                // Remove any forward history if we're not at the end
+                if (currentHistoryIndex < navigationHistory.length - 1) {
+                    navigationHistory = navigationHistory.slice(0, currentHistoryIndex + 1);
+                }
+                
+                // Add new category to history
+                navigationHistory.push(category);
+                currentHistoryIndex = navigationHistory.length - 1;
+                
+                // If we have more than 2 categories (main + 2), remove the oldest category
+                if (navigationHistory.length > 3) {
+                    navigationHistory.splice(1, 1);
+                    currentHistoryIndex = navigationHistory.length - 1;
+                }
+                
+                // Push state to browser history
+                window.history.pushState({ category: category }, '');
+            }
+        }
+
+        // Header CC Light Sweep Effect on refresh
+        function triggerHeaderSweep() {
+            const header = document.getElementById('mainHeader');
+            header.classList.add('light-sweep');
+            setTimeout(() => {
+                header.classList.remove('light-sweep');
+            }, 3000);
+        }
+
+        // Active Category CC Light Sweep Effect
+        function startActiveCategorySweepEffect() {
+            setInterval(() => {
+                const activeCategory = document.querySelector('.category-list a.active');
+                if (activeCategory) {
+                    activeCategory.classList.add('light-sweep');
+                    setTimeout(() => {
+                        activeCategory.classList.remove('light-sweep');
+                    }, 3000);
+                }
+            }, 6000);
+        }
+
+        // Load initial data - optimized for speed
+        async function loadInitialData() {
+            try {
+                console.log('Loading initial data from Supabase...');
+                
+                // Check internet connection first
+                if (!navigator.onLine) {
+                    showOfflineError();
+                    return;
+                }
+                
+                const [categoriesResult, newsResult] = await Promise.all([
+                    supabase.from('categories').select('*').order('name'),
+                    supabase.from('news').select('*').order('created_at', { ascending: false }).limit(100)
+                ]);
+
+                if (categoriesResult.error) {
+                    console.error('Error loading categories:', categoriesResult.error);
+                    showError('নিজের ইন্টারনেট সংযোগটি পরীক্ষা করুন');
+                    return;
+                }
+
+                if (newsResult.error) {
+                    console.error('Error loading news:', newsResult.error);
+                    showError('খবর লোড করতে সমস্যা হচ্ছে');
+                    return;
+                }
+
+                console.log('Categories loaded:', categoriesResult.data);
+                console.log('News loaded:', newsResult.data.length, 'items');
+
+                allNewsData = newsResult.data;
+                findBreakingNews('আজকের খবর');
+                renderCategories(categoriesResult.data);
+                setupRealtimeListener();
+                setupSwipeNavigation();
+                setupEventListeners();
+
+            } catch (error) {
+                console.error('Error loading initial data:', error);
+                showError('ডেটা লোড করতে সমস্যা হচ্ছে');
+            }
+        }
+
+        // Show offline error message - UPDATED: Removed refresh button completely
+        function showOfflineError() {
+            isAppOffline = true;
+            
+            const newsList = document.getElementById('newsList');
+            const breakingSection = document.getElementById('breakingNewsSection');
+            const searchResultsInfo = document.getElementById('searchResultsInfo');
+            const categoryNav = document.getElementById('categoryNav');
+            const swipeIndicators = document.getElementById('swipeIndicators');
+            
+            // Hide breaking news, search results, category navigation and swipe indicators when offline
+            breakingSection.style.display = 'none';
+            searchResultsInfo.style.display = 'none';
+            categoryNav.style.display = 'none';
+            swipeIndicators.style.display = 'none';
+            
+            // Show offline message without refresh button
+            newsList.innerHTML = `<div class="no-results" style="color: #d32f2f;">
+                <i class="fas fa-exclamation-triangle"></i><br>
+                নিজের ইন্টারনেট সংযোগটি পরীক্ষা করুন
+            </div>`;
+        }
+
+        // Find breaking news for specific category
+        function findBreakingNews(category) {
+            // If app is offline, don't show breaking news
+            if (isAppOffline) {
+                document.getElementById('breakingNewsSection').style.display = 'none';
+                if (breakingNewsInterval) {
+                    clearInterval(breakingNewsInterval);
+                }
+                return;
+            }
+            
+            console.log('Finding breaking news for category:', category);
+            
+            if (category === 'সব খবর') {
+                breakingNewsItems = allNewsData.filter(item => item.is_breaking === true);
+            } else if (category === 'আজকের খবর') {
+                breakingNewsItems = allNewsData.filter(item => 
+                    item.is_breaking === true && isToday(item.created_at)
+                );
+            } else {
+                breakingNewsItems = allNewsData.filter(item => 
+                    item.is_breaking === true && item.category === category
+                );
+            }
+            
+            console.log('Breaking news found:', breakingNewsItems.length, 'items');
+            
+            if (breakingNewsItems.length > 0) {
+                startBreakingNewsCycle();
+            } else {
+                document.getElementById('breakingNewsSection').style.display = 'none';
+                if (breakingNewsInterval) {
+                    clearInterval(breakingNewsInterval);
+                }
+            }
+        }
+
+        // Start the breaking news cycle
+        function startBreakingNewsCycle() {
+            // If app is offline, don't start breaking news cycle
+            if (isAppOffline) {
+                document.getElementById('breakingNewsSection').style.display = 'none';
+                if (breakingNewsInterval) {
+                    clearInterval(breakingNewsInterval);
+                }
+                return;
+            }
+            
+            const breakingSection = document.getElementById('breakingNewsSection');
+            breakingSection.style.display = 'flex';
+            
+            currentBreakingNewsIndex = 0;
+            
+            if (breakingNewsItems.length > 0) {
+                displayBreakingNews(breakingNewsItems[0]);
+            }
+            
+            // Clear existing interval
+            if (breakingNewsInterval) {
+                clearInterval(breakingNewsInterval);
+            }
+        }
+
+        // Display breaking news with enhanced animations
+        function displayBreakingNews(news) {
+            if (isTransitioning) return;
+            
+            isTransitioning = true;
+            
+            const breakingSection = document.getElementById('breakingNewsSection');
+            const titleElement = document.getElementById('breakingNewsTitle');
+            const contentElement = breakingSection.querySelector('.breaking-news-content');
+            
+            // Remove any existing marquee container or animations
+            const existingMarquee = contentElement.querySelector('.marquee-container');
+            if (existingMarquee) {
+                existingMarquee.remove();
+            }
+            
+            // Remove any existing animations from title
+            titleElement.classList.remove('slide-animation');
+            titleElement.classList.remove('dissolve-effect');
+            titleElement.style.animation = '';
+            titleElement.style.transform = '';
+            titleElement.style.display = 'block';
+            titleElement.style.opacity = '1';
+            
+            // Reset animations to trigger them again
+            const label = breakingSection.querySelector('.breaking-news-label');
+            const title = breakingSection.querySelector('.breaking-news-title');
+            
+            // First slide out the current content
+            label.style.animation = 'none';
+            title.style.animation = 'none';
+            
+            // Reset positions to slide out
+            label.style.transform = 'translateX(0)';
+            title.style.transform = 'translateX(0)';
+            
+            // Add slide out animation
+            setTimeout(() => {
+                label.style.transition = 'transform 0.5s ease-out';
+                title.style.transition = 'transform 0.5s ease-out';
+                label.style.transform = 'translateX(-100vw)';
+                title.style.transform = 'translateX(-100vw)';
+            }, 10);
+            
+            // After slide out, update content and slide in
+            setTimeout(() => {
+                // Update the title
+                titleElement.textContent = news.title;
+                
+                // Reset transitions
+                label.style.transition = 'none';
+                title.style.transition = 'none';
+                
+                // Reset positions to slide in
+                label.style.transform = 'translateX(100vw)';
+                title.style.transform = 'translateX(100vw)';
+                
+                // Reset label animation
+                label.style.animation = 'slideInLabel 1s ease-out forwards';
+                
+                // Reset title animation
+                title.style.animation = 'slideInTitle 1s ease-out 0.3s forwards';
+                
+                // After initial animations, apply marquee animation
+                setTimeout(() => {
+                    const animationInfo = applyBreakingNewsAnimation(titleElement, contentElement, news.title);
+                    currentAnimationType = animationInfo.type;
+                    currentAnimationDuration = animationInfo.duration;
+                    
+                    // Schedule next breaking news based on animation type
+                    scheduleNextBreakingNews(animationInfo);
+                    
+                    isTransitioning = false;
+                }, 1500);
+                
+                // Update click event to navigate to current breaking news - ONLY HIGHLIGHT BREAKING NEWS
+                breakingSection.onclick = function() {
+                    const newsItem = document.querySelector(`.news-item[data-id="${news.id}"]`);
+                    if (newsItem) {
+                        newsItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        
+                        // COMPLETELY REMOVED HIGHLIGHTING FOR ALL REGULAR NEWS ITEMS
+                        // Now only breaking news will highlight when clicked from breaking news section
+                        
+                        // Add highlight effect ONLY to breaking news
+                        newsItem.classList.add('highlighted');
+                        
+                        setTimeout(() => {
+                            newsItem.classList.remove('highlighted');
+                        }, 10000);
+                    }
+                };
+            }, 500);
+        }
+
+        // Schedule next breaking news
+        function scheduleNextBreakingNews(animationInfo) {
+            if (breakingNewsInterval) {
+                clearInterval(breakingNewsInterval);
+            }
+            
+            let nextNewsDelay;
+            if (animationInfo.type === 'marquee') {
+                // For marquee: duration + dissolve effect time
+                nextNewsDelay = (animationInfo.duration + 1) * 1000;
+            } else {
+                // For marquee animation: duration + dissolve effect time
+                nextNewsDelay = (animationInfo.duration + 1) * 1000;
+            }
+            
+            breakingNewsInterval = setTimeout(() => {
+                if (breakingNewsItems.length > 0 && !isTransitioning) {
+                    currentBreakingNewsIndex = (currentBreakingNewsIndex + 1) % breakingNewsItems.length;
+                    displayBreakingNews(breakingNewsItems[currentBreakingNewsIndex]);
+                }
+            }, nextNewsDelay);
+        }
+
+        // Apply marquee animation for all news (long and short) - ULTRA FAST VERSION
+        function applyBreakingNewsAnimation(titleElement, contentElement, titleText) {
+            // Always apply marquee effect for all news
+            const marqueeContainer = document.createElement('div');
+            marqueeContainer.className = 'marquee-container';
+            
+            const marqueeContent = document.createElement('div');
+            marqueeContent.className = 'marquee-content';
+            marqueeContent.textContent = titleText;
+            
+            // Calculate animation duration based on text length - ULTRA FAST SPEED
+            const textWidth = titleElement.scrollWidth;
+            const containerWidth = contentElement.clientWidth;
+            
+            // For ULTRA FAST speed, use a much larger divisor (200 instead of 50)
+            const duration = Math.max(2, (textWidth + containerWidth) / 200); // Minimum 2 seconds
+            marqueeContent.style.animationDuration = `${duration}s`;
+            
+            // Hide the original title and show marquee
+            titleElement.style.display = 'none';
+            marqueeContainer.appendChild(marqueeContent);
+            contentElement.appendChild(marqueeContainer);
+            
+            // After marquee finishes, apply dissolve effect and then start next breaking news
+            setTimeout(() => {
+                marqueeContainer.classList.add('dissolve-effect');
+                
+                // After dissolve, remove marquee and prepare for next breaking news
+                setTimeout(() => {
+                    marqueeContainer.remove();
+                }, 1000);
+            }, duration * 1000);
+            
+            console.log('Applying ULTRA FAST marquee effect with duration:', duration + 's');
+            return { type: 'marquee', duration: duration };
+        }
+
+        // Show error message with refresh icon only
+        function showError(message) {
+            const newsList = document.getElementById('newsList');
+            newsList.innerHTML = `<div class="no-results" style="color: #d32f2f;">
+                <i class="fas fa-exclamation-triangle"></i><br>
+                ${message}
+            </div>`;
+        }
+
+        // Setup real-time listener for news updates
+        function setupRealtimeListener() {
+            console.log('Setting up real-time listener...');
+            
+            const newsSubscription = supabase
+                .channel('news-changes')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'news'
+                    },
+                    async (payload) => {
+                        console.log('News change detected:', payload);
+                        
+                        const { data: newsData, error } = await supabase
+                            .from('news')
+                            .select('*')
+                            .order('created_at', { ascending: false })
+                            .limit(100);
+                        
+                        if (!error) {
+                            allNewsData = newsData;
+                            findBreakingNews(currentActiveCategory);
+                            
+                            const activeCategory = document.querySelector('.category-list a.active')?.dataset.category;
+                            const searchTerm = document.getElementById('searchInput').value.trim();
+                            if (searchTerm) {
+                                renderNews(activeCategory, searchTerm);
+                            } else {
+                                renderNews(activeCategory);
+                            }
+                        }
+                    }
+                )
+                .subscribe();
+
+            return newsSubscription;
+        }
+
+        // Render category navigation - UPDATED: Directly use "সব খবর"
+        function renderCategories(categoriesData) {
+            // If app is offline, don't render categories
+            if (isAppOffline) {
+                document.getElementById('categoryNav').style.display = 'none';
+                document.getElementById('swipeIndicators').style.display = 'none';
+                return;
+            }
+            
+            const categoryList = document.getElementById('categoryList');
+            const swipeIndicators = document.getElementById('swipeIndicators');
+            const categoryNav = document.getElementById('categoryNav');
+            
+            categoryList.innerHTML = '';
+            swipeIndicators.innerHTML = '';
+            
+            // Show category navigation and swipe indicators when online
+            categoryNav.style.display = 'block';
+            swipeIndicators.style.display = 'flex';
+            
+            // UPDATED: Order of categories - "আজকের খবর" first, then "সব খবর"
+            categories = ['আজকের খবর', 'সব খবর'];
+            
+            if (categoriesData && categoriesData.length > 0) {
+                categoriesData.forEach(cat => {
+                    if (cat.name !== 'সব খবর' && cat.name !== 'আজকের খবর') {
+                        categories.push(cat.name);
+                    }
+                });
+            } else {
+                categories.push('রাজনীতি', 'ক্রীড়া', 'বিনোদন', 'শিক্ষা', 'স্বাস্থ্য', 'অপরাধ', 'অর্থনীতি', 'প্রযুক্তি');
+            }
+            
+            console.log('Rendering categories:', categories);
+            
+            categories.forEach((category, index) => {
+                const listItem = document.createElement('li');
+                const link = document.createElement('a');
+                link.href = '#';
+                link.innerHTML = `${category} <i class="fas fa-sync-alt refresh-icon"></i>`;
+                link.dataset.category = category;
+                link.dataset.index = index;
+                
+                // UPDATED: Default active category is now 'আজকের খবর'
+                if (category === 'আজকের খবর') {
+                    link.classList.add('active');
+                    currentCategoryIndex = index;
+                    currentActiveCategory = category;
+                }
+                
+                listItem.appendChild(link);
+                categoryList.appendChild(listItem);
+                
+                const indicator = document.createElement('div');
+                indicator.className = 'swipe-indicator';
+                // UPDATED: Default active indicator is now 'আজকের খবর'
+                if (category === 'আজকের খবর') {
+                    indicator.classList.add('active');
+                }
+                indicator.dataset.index = index;
+                swipeIndicators.appendChild(indicator);
+            });
+            
+            document.querySelectorAll('.category-list a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const category = this.dataset.category;
+                    const index = parseInt(this.dataset.index);
+                    
+                    const currentTime = new Date().getTime();
+                    const timeDiff = currentTime - lastClickTime;
+                    
+                    // Check if offline
+                    if (!navigator.onLine || isAppOffline) {
+                        showOfflineError();
+                        return;
+                    }
+                    
+                    if (timeDiff < 300 && category === currentActiveCategory && !isRefreshing) {
+                        refreshCurrentCategory();
+                    } else {
+                        document.querySelectorAll('.category-list a').forEach(a => {
+                            a.classList.remove('active');
+                            a.classList.remove('clicked');
+                            a.classList.remove('refreshing');
+                        });
+                        this.classList.add('active');
+                        this.classList.add('clicked');
+                        
+                        addToNavigationHistory(category);
+                        findBreakingNews(category);
+                        renderNews(category);
+                        document.getElementById('searchInput').value = '';
+                        
+                        currentCategoryIndex = index;
+                        currentActiveCategory = category;
+                        updateActiveCategory(index);
+                    }
+                    
+                    lastClickTime = currentTime;
+                });
+            });
+            
+            renderNews('আজকের খবর');
+        }
+
+        // Refresh current category
+        async function refreshCurrentCategory() {
+            if (isRefreshing) return;
+            
+            try {
+                isRefreshing = true;
+                console.log('Refreshing current category:', currentActiveCategory);
+                
+                const activeCategoryLink = document.querySelector('.category-list a.active');
+                
+                // Check internet connection
+                if (!navigator.onLine) {
+                    // Directly show offline error without any spinning animation
+                    showOfflineError();
+                    isRefreshing = false;
+                    return;
+                }
+                
+                activeCategoryLink.classList.add('refreshing');
+                
+                triggerHeaderSweep();
+                
+                const { data: newsData, error } = await supabase
+                    .from('news')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(100);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                allNewsData = newsData;
+                findBreakingNews(currentActiveCategory);
+                
+                const searchTerm = document.getElementById('searchInput').value.trim();
+                
+                if (searchTerm) {
+                    renderNews(currentActiveCategory, searchTerm);
+                } else {
+                    renderNews(currentActiveCategory);
+                }
+                
+                console.log('Category refreshed successfully');
+                
+            } catch (error) {
+                console.error('Error refreshing category:', error);
+                showError('খবর রিফ্রেশ করতে সমস্যা হচ্ছে');
+            } finally {
+                const activeCategoryLink = document.querySelector('.category-list a.active');
+                activeCategoryLink.classList.remove('refreshing');
+                isRefreshing = false;
+            }
+        }
+
+        // Set up swipe navigation - UPDATED: No looping between first and last category
+        function setupSwipeNavigation() {
+            const newsContent = document.getElementById('newsContent');
+            
+            // Don't setup swipe navigation if offline
+            if (!navigator.onLine || isAppOffline) {
+                return;
+            }
+            
+            newsContent.addEventListener('touchstart', function(e) {
+                if (isSwiping) return; // Prevent multiple simultaneous swipes
+                
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                swipeStartTime = Date.now();
+                isSwiping = true;
+            }, { passive: true });
+            
+            newsContent.addEventListener('touchmove', function(e) {
+                if (!isSwiping) return;
+                
+                const currentX = e.touches[0].clientX;
+                const currentY = e.touches[0].clientY;
+                const diffX = Math.abs(currentX - startX);
+                const diffY = Math.abs(currentY - startY);
+                
+                // If horizontal movement is significant, prevent default to avoid scroll
+                if (diffX > 10 && diffX > diffY) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            newsContent.addEventListener('touchend', function(e) {
+                if (!isSwiping) return;
+                
+                endX = e.changedTouches[0].clientX;
+                endY = e.changedTouches[0].clientY;
+                
+                const currentTime = Date.now();
+                const timeDiff = currentTime - lastSwipeTime;
+                
+                // Debounce swipes - prevent multiple swipes within 500ms
+                if (timeDiff < 500) {
+                    isSwiping = false;
+                    return;
+                }
+                
+                handleSwipe();
+                lastSwipeTime = currentTime;
+                isSwiping = false;
+            }, { passive: true });
+        }
+
+        // Handle swipe gesture - UPDATED: No looping between first and last category
+        function handleSwipe() {
+            // If app is offline, don't handle swipe
+            if (isAppOffline) {
+                return;
+            }
+            
+            const diffX = endX - startX;
+            const diffY = Math.abs(endY - startY);
+            const duration = Date.now() - swipeStartTime;
+            const velocity = Math.abs(diffX) / duration;
+            
+            // Check if it's a valid horizontal swipe
+            if (Math.abs(diffX) > swipeThreshold && 
+                diffY < verticalThreshold && 
+                velocity > swipeMinVelocity) {
+                
+                if (diffX > 0) {
+                    // Swipe right - go to previous category, but not from first to last
+                    if (currentCategoryIndex > 0) {
+                        navigateToCategory(currentCategoryIndex - 1);
+                    }
+                } else {
+                    // Swipe left - go to next category, but not from last to first
+                    if (currentCategoryIndex < categories.length - 1) {
+                        navigateToCategory(currentCategoryIndex + 1);
+                    }
+                }
+            }
+        }
+
+        // Navigate to category by index - UPDATED: No looping
+        function navigateToCategory(index) {
+            // If app is offline, don't navigate
+            if (isAppOffline) {
+                return;
+            }
+            
+            // Only navigate if the index is within valid range
+            if (index >= 0 && index < categories.length && index !== currentCategoryIndex) {
+                // Add swipe animation only to news list (not date-time or breaking news)
+                const newsList = document.getElementById('newsList');
+                if (index > currentCategoryIndex) {
+                    newsList.classList.add('swipe-animation-left');
+                } else {
+                    newsList.classList.add('swipe-animation-right');
+                }
+                
+                // After animation, update content
+                setTimeout(() => {
+                    newsList.classList.remove('swipe-animation-left', 'swipe-animation-right');
+                    
+                    currentCategoryIndex = index;
+                    const category = categories[index];
+                    
+                    addToNavigationHistory(category);
+                    findBreakingNews(category);
+                    updateActiveCategory(index);
+                    document.getElementById('searchInput').value = '';
+                    currentActiveCategory = category;
+                    renderNews(category);
+                    
+                    console.log(`Swiped to category: ${category} (index: ${index})`);
+                }, 300);
+            }
+        }
+
+        // Update active category in navigation
+        function updateActiveCategory(index) {
+            document.querySelectorAll('.category-list a').forEach(a => {
+                a.classList.remove('active');
+                a.classList.remove('clicked');
+                a.classList.remove('refreshing');
+            });
+            document.querySelectorAll('.swipe-indicator').forEach(indicator => indicator.classList.remove('active'));
+            
+            const activeCategoryElement = document.querySelector(`.category-list a[data-index="${index}"]`);
+            if (activeCategoryElement) {
+                activeCategoryElement.classList.add('active');
+                activeCategoryElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+            
+            const activeIndicator = document.querySelector(`.swipe-indicator[data-index="${index}"]`);
+            if (activeIndicator) {
+                activeIndicator.classList.add('active');
+            }
+        }
+
+        // Render news for a specific category - Optimized for speed
+        function renderNews(category, searchTerm = '') {
+            // If app is offline, don't render news
+            if (isAppOffline) {
+                return;
+            }
+            
+            const newsList = document.getElementById('newsList');
+            const searchResultsInfo = document.getElementById('searchResultsInfo');
+            
+            if (searchTerm) {
+                searchResultsInfo.style.display = 'block';
+                searchResultsInfo.textContent = `"${searchTerm}" এর জন্য ${category} বিভাগে অনুসন্ধান ফলাফল`;
+            } else {
+                searchResultsInfo.style.display = 'none';
+            }
+            
+            let filteredNews = allNewsData || [];
+            
+            if (category === 'আজকের খবর') {
+                filteredNews = filteredNews.filter(item => isToday(item.created_at));
+            } else if (category !== 'সব খবর') {
+                filteredNews = filteredNews.filter(item => item.category === category);
+            }
+            
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                filteredNews = filteredNews.filter(item => 
+                    item.title.toLowerCase().includes(term) ||
+                    (item.excerpt && item.excerpt.toLowerCase().includes(term)) ||
+                    (item.category && item.category.toLowerCase().includes(term)) ||
+                    (item.location && item.location.toLowerCase().includes(term))
+                );
+            }
+            
+            console.log(`Rendering ${filteredNews.length} news items for category: ${category}`);
+            
+            if (filteredNews.length === 0) {
+                if (searchTerm) {
+                    newsList.innerHTML = `<div class="no-results">"${searchTerm}" এর জন্য কোন খবর পাওয়া যায়নি</div>`;
+                } else {
+                    newsList.innerHTML = '<div class="no-results">এই বিভাগে এখনও কোন খবর নেই</div>';
+                }
+                return;
+            }
+            
+            const fragment = document.createDocumentFragment();
+            
+            filteredNews.forEach((item) => {
+                const newsItem = document.createElement('div');
+                newsItem.className = 'news-item';
+                newsItem.setAttribute('data-timestamp', item.created_at);
+                newsItem.setAttribute('data-id', item.id);
+                
+                let buttonClass = '';
+                let buttonIcon = '<i class="fas fa-external-link-alt"></i>';
+                let buttonText = 'বিস্তারিত';
+                let linkUrl = '';
+                
+                if (item.video_url) {
+                    buttonClass = 'video';
+                    linkUrl = item.video_url;
+                } else if (item.photo_url) {
+                    buttonClass = 'photo';
+                    linkUrl = item.photo_url;
+                } else {
+                    linkUrl = item.external_url || '#';
+                }
+                
+                let detailButton = '';
+                if (linkUrl && linkUrl !== '#') {
+                    detailButton = `
+                        <button class="detail-button ${buttonClass}" data-link="${linkUrl}">
+                            ${buttonIcon} ${buttonText}
+                        </button>
+                    `;
+                }
+                
+                const excerpt = item.excerpt || 'বিস্তারিত বিবরণ পাওয়া যায়নি';
+                const showSeeMore = excerpt.length > 150;
+                
+                // UPDATED: Centered thumbnail image with blue background visible on top and sides
+                const imageHtml = item.image_url ? 
+                    `<div class="news-image-container">
+                        <img src="${item.image_url}" alt="${item.title}" class="news-image" loading="lazy">
+                     </div>` : '';
+                
+                newsItem.innerHTML = `
+                    ${imageHtml}
+                    <div class="news-content-wrapper">
+                        ${detailButton}
+                        <h3 class="news-title">${item.title || 'শিরোনাম নেই'}</h3>
+                        <p class="news-excerpt">${excerpt}</p>
+                        ${showSeeMore ? '<button class="see-more-btn">see more...</button>' : ''}
+                        <div class="news-meta">
+                            <span><span class="time-display">${getElapsedTime(item.created_at)}</span> • ${item.location || 'বাংলা'}</span>
+                            <span class="category-tag" data-category="${item.category}">${item.category}</span>
+                        </div>
+                    </div>
+                `;
+                
+                fragment.appendChild(newsItem);
+            });
+            
+            newsList.innerHTML = '';
+            newsList.appendChild(fragment);
+            
+            // Add click event listeners to category tags
+            document.querySelectorAll('.category-tag').forEach(tag => {
+                tag.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const category = this.getAttribute('data-category');
+                    if (category) {
+                        // Check if offline
+                        if (!navigator.onLine || isAppOffline) {
+                            showOfflineError();
+                            return;
+                        }
+                        
+                        // Find and activate the category in navigation
+                        updateActiveCategoryByName(category);
+                        findBreakingNews(category);
+                        renderNews(category);
+                        document.getElementById('searchInput').value = '';
+                        
+                        // Add to navigation history
+                        addToNavigationHistory(category);
+                    }
+                });
+            });
+            
+            // Add click event listeners to detail buttons
+            document.querySelectorAll('.detail-button').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const link = this.getAttribute('data-link');
+                    if (link && link !== '#') {
+                        window.open(link, '_blank');
+                    }
+                });
+            });
+            
+            // Add click event listeners to see more buttons
+            document.querySelectorAll('.see-more-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const excerpt = this.previousElementSibling;
+                    excerpt.classList.toggle('expanded');
+                    this.textContent = excerpt.classList.contains('expanded') ? 'see less' : 'see more...';
+                });
+            });
+            
+            // COMPLETELY REMOVED HIGHLIGHTING FOR ALL REGULAR NEWS ITEMS
+            // Now no news item in the list can be highlighted by clicking
+            document.querySelectorAll('.news-item').forEach(item => {
+                item.style.cursor = 'default';
+                // Remove any click events that might cause highlighting
+                item.onclick = null;
+            });
+            
+            startNewsItemLightSweep();
+        }
+
+        // Start light sweep animation for news items with different delays
+        function startNewsItemLightSweep() {
+            // If app is offline, don't start light sweep
+            if (isAppOffline) {
+                return;
+            }
+            
+            const newsItems = document.querySelectorAll('.news-item');
+            
+            if (window.newsSweepInterval) {
+                clearInterval(window.newsSweepInterval);
+            }
+            
+            function triggerRandomLightSweep() {
+                newsItems.forEach(item => {
+                    item.classList.remove('light-sweep');
+                });
+                
+                if (newsItems.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * newsItems.length);
+                    const randomItem = newsItems[randomIndex];
+                    
+                    setTimeout(() => {
+                        randomItem.classList.add('light-sweep');
+                    }, 100);
+                    
+                    setTimeout(() => {
+                        randomItem.classList.remove('light-sweep');
+                    }, 2500);
+                }
+            }
+            
+            newsItems.forEach((item, index) => {
+                const delay = (index * 400) + Math.random() * 1500;
+                setTimeout(() => {
+                    item.classList.add('light-sweep');
+                    
+                    setTimeout(() => {
+                        item.classList.remove('light-sweep');
+                    }, 2500);
+                }, delay);
+            });
+            
+            window.newsSweepInterval = setInterval(triggerRandomLightSweep, 3000);
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            document.getElementById('searchBtn').addEventListener('click', performSearch);
+            
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+            
+            document.getElementById('searchInput').addEventListener('input', function() {
+                if (this.value.trim() === '') {
+                    const activeCategory = document.querySelector('.category-list a.active')?.dataset.category;
+                    if (activeCategory) {
+                        renderNews(activeCategory);
+                    }
+                }
+            });
+        }
+        
+        // Perform search
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            const activeCategory = document.querySelector('.category-list a.active')?.dataset.category;
+            
+            if (searchTerm && activeCategory) {
+                renderNews(activeCategory, searchTerm);
+            } else if (activeCategory) {
+                renderNews(activeCategory);
+            }
+        }
+    </script>
+</body>
+</html>
